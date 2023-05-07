@@ -7,6 +7,14 @@ import random
 import shutil
 import sys
 
+def deleteAllFolder(path):
+    for file_name in os.listdir(path):
+        file_path = os.path.join(path, file_name)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+        elif os.path.isdir(file_path):
+            shutil.rmtree(file_path)
+
 def downloadSaveData():
     # Set the URLs for the train data
     train_data_url = 'http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz'
@@ -21,13 +29,7 @@ def downloadSaveData():
 
     # If the folder exists, delete all files in it to create a new sample
     if os.path.exists(data_dir):
-        # Delete all files and subdirectories inside the folder
-        for file_name in os.listdir(data_dir):
-            file_path = os.path.join(data_dir, file_name)
-            if os.path.isfile(file_path):
-                os.remove(file_path)
-            elif os.path.isdir(file_path):
-                shutil.rmtree(file_path)
+        deleteAllFolder(data_dir)
     else:
         # Create the folder if it doesn't exist
         os.makedirs(data_dir)
@@ -91,6 +93,7 @@ def split_data(input_dir, output_dir, n_clients):
                 dst_path = os.path.join(client_dir_label, file_name)
                 shutil.copy(src_path, dst_path)
 
+    deleteAllFolder(input_dir)
 
 if __name__ == '__main__':
     try:
