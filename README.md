@@ -1,2 +1,2 @@
 # FederatedLearning_Implementation
-Primeiro Trabalho da disciplina de Sistemas Distribuidos - Implementação de Aprendizado Federado sem Flower
+Primeiro Trabalho da disciplina de Sistemas Distribuidos - Implementação de Aprendizado Federado com GRPC
