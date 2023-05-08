@@ -1,0 +1,36 @@
+syntax="proto3";
+
+package main;
+
+message registerArgs {
+    string ip = 1;
+    string door = 2;
+    string cid = 3;
+}
+
+message registerOut {
+    bool connectedClient = 1;
+    int32 round = 2;
+}
+
+message learningResults {
+    float learningWeight = 1;
+    int32 sampleSize = 2;
+}
+
+message accuracy {
+    float acc = 1;
+}
+
+message aggregationWeight {
+    float weight = 1;
+}
+
+message void {
+}
+
+service api {
+    rpc clientRegister(registerArgs) returns (registerOut);
+    rpc startLearning(void) returns (learningResults);
+    rpc modelValidation(aggregationWeight) returns (accuracy);
+}
