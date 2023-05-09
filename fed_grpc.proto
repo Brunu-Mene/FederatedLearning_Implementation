@@ -4,7 +4,7 @@ package main;
 
 message registerArgs {
     string ip = 1;
-    string door = 2;
+    string port = 2;
     string cid = 3;
 }
 
@@ -29,7 +29,7 @@ message aggregationWeight {
 message void {
 }
 
-service api {
+service FederatedService {
     rpc clientRegister(registerArgs) returns (registerOut);
     rpc startLearning(void) returns (learningResults);
     rpc modelValidation(aggregationWeight) returns (accuracy);
