@@ -5,6 +5,7 @@ import cv2
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPool2D,Flatten,Dense
 from tensorflow.keras.optimizers import SGD
+from keras.utils import to_categorical
 
 def load_mnist_byCid(cid):
     data = []
@@ -17,17 +18,17 @@ def load_mnist_byCid(cid):
         # load the image and extract the class labels
         img_grayscale = cv2.imread(imgpath, cv2.IMREAD_GRAYSCALE)
 
-        #reshape in 1D array
-        img = np.array(img_grayscale).flatten()
+        #reshape in 3D array and normalize
+        img = np.expand_dims(img_grayscale, axis=-1) / 255.0
 
         #get label from img name based on the folder
         label = imgpath.split(os.path.sep)[-2]
 
-        # normalizing img 
-        data.append(img/255.0)
+        # append to data and labels lists
+        data.append(img)
         labels.append(label)
 
-    return data, labels
+    return np.array(data), np.array(labels)
 
 def define_model(input_shape,num_classes):
     model = Sequential()
@@ -41,3 +42,13 @@ def define_model(input_shape,num_classes):
     model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
     
     return model
+
+
+def setWeightSingleList(weights):
+    # Flatten each array of weights into a 1D list of floats
+    weights_flat = [w.flatten() for w in weights]
+
+    # Concatenate all of the weight lists into a single list
+    weights = np.concatenate(weights_flat).tolist()
+
+    return weights

@@ -14,7 +14,7 @@ message registerOut {
 }
 
 message learningResults {
-    float learningWeight = 1;
+    repeated float learningWeight = 1;
     int32 sampleSize = 2;
 }
 
@@ -23,7 +23,7 @@ message accuracy {
 }
 
 message aggregationWeight {
-    float weight = 1;
+    repeated float weight = 1;
 }
 
 message void {

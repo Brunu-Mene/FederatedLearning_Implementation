@@ -4,7 +4,7 @@ import fed_grpc_pb2_grpc
 
 
 
-class FedServer(fed_grpc_pb2_grpc.apiServicer):
+class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
     def __init__(self):
         self.clients = {}
         self.round = 0
