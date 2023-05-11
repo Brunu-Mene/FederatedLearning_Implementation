@@ -52,3 +52,14 @@ def setWeightSingleList(weights):
     weights = np.concatenate(weights_flat).tolist()
 
     return weights
+
+def reshapeWeight(server_weight, client_weight):
+    reshape_weight = []
+
+    # iterate through the weights in the model and reshape the corresponding sublist of the concatenated weight list
+    for layer_weights in client_weight:
+        n_weights = np.prod(layer_weights.shape)
+        reshape_weight.append(np.array(server_weight[:n_weights]).reshape(layer_weights.shape))
+        server_weight = server_weight[n_weights:]
+
+    return reshape_weight

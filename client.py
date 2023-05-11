@@ -21,10 +21,12 @@ class FedClient(fed_grpc_pb2_grpc.FederatedServiceServicer):
 
         return fed_grpc_pb2.learningResults(learningWeight = (aux.setWeightSingleList(self.model.get_weights())), sampleSize = (len(self.x_train)))
 
+    def modelValidation(self, request, context):
+        server_weight = request.weight
+        self.model.set_weights(aux.reshapeWeight(server_weight, self.model.get_weights()))
+        accuracy = self.model.evaluate(self.x_test, self.y_test, verbose=0)[1]
 
-    # def modelValidation(self, request, context): 
-    
-    #     return (accuracy)
+        return fed_grpc_pb2.accuracy(acc = (accuracy))
 
 if __name__ == '__main__':
     cid = -1
