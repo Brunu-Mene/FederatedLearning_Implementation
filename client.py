@@ -5,6 +5,8 @@ import fed_grpc_pb2_grpc
 import fed_grpc_pb2
 from sklearn.model_selection import train_test_split
 from keras.utils import to_categorical
+import random
+import numpy as np
 
 
 class FedClient(fed_grpc_pb2_grpc.FederatedServiceServicer):
@@ -47,3 +49,30 @@ if __name__ == '__main__':
 
     model = aux.define_model(input_shape,num_classes)
     model.fit(x_train, y_train, epochs=1, verbose=2)
+
+    weight = aux.setWeightSingleList(model.get_weights())
+    print(weight[:5])
+    print(model.evaluate(x_test, y_test, verbose=0)[1])
+
+    random_weight = weight[:]
+    random.shuffle(random_weight)
+    model.set_weights(aux.reshapeWeight(random_weight, model.get_weights()))
+    print(random_weight[:5])
+    print(model.evaluate(x_test, y_test, verbose=0)[1])
+
+
+
+    weights_clients_list = []
+    weights_clients_list.append(weight)
+    weights_clients_list.append(random_weight)
+
+    aggregated_weights = []
+    for j in range(len(weights_clients_list[0])):
+        element = 0.0
+        for i in range(2):
+            element += weights_clients_list[i][j]
+        aggregated_weights.append(element/2.0)  
+
+    print(aggregated_weights[:5])
+    model.set_weights(aux.reshapeWeight(aggregated_weights, model.get_weights()))
+    print(model.evaluate(x_test, y_test, verbose=0)[1])

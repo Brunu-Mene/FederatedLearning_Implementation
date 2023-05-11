@@ -43,7 +43,6 @@ def define_model(input_shape,num_classes):
     
     return model
 
-
 def setWeightSingleList(weights):
     # Flatten each array of weights into a 1D list of floats
     weights_flat = [w.flatten() for w in weights]
