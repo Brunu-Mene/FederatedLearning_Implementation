@@ -36,6 +36,9 @@ class FedClient(fed_grpc_pb2_grpc.FederatedServiceServicer):
         client_channel.wait_for_termination()
 
     def startLearning(self, request, context):
+        ac_round = request.round
+        print()
+        print(f"Starting {ac_round} round")
         self.model.fit(x_train, y_train, epochs=1, verbose=2)
 
         weights_list = aux.setWeightSingleList(self.model.get_weights())

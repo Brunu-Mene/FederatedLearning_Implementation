@@ -15,18 +15,16 @@ class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
         self.clients = {}
         self.round = 0
 
-    def __callClientLearning(self, cid, q):
-        client_ip = self.clients[cid]
+    def __callClientLearning(self, client_ip, q):
         channel = grpc.insecure_channel(client_ip)
         client = fed_grpc_pb2_grpc.FederatedServiceStub(channel)
 
-        weight_list = client.startLearning(fed_grpc_pb2.void()).weight
+        weight_list = client.startLearning(fed_grpc_pb2.currentRound(round = (self.round))).weight
         sample_size = client.getSampleSize(fed_grpc_pb2.void()).size
 
         q.put([weight_list, sample_size])
 
-    def __callModelValidation(self, cid, aggregated_weights):
-        client_ip = self.clients[cid]
+    def __callModelValidation(self, client_ip, aggregated_weights):
         channel = grpc.insecure_channel(client_ip)
 
         client = fed_grpc_pb2_grpc.FederatedServiceStub(channel)
@@ -79,7 +77,7 @@ class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
             thread_list = []
             q = queue.Queue()
             for i in range(n_round_clients):
-                thread = threading.Thread(target=self.__callClientLearning, args=(cid_targets[i], q))
+                thread = threading.Thread(target=self.__callClientLearning, args=(self.clients[cid_targets[i]], q))
                 thread_list.append(thread)
                 thread.start()
             for thread in thread_list:
@@ -96,7 +94,7 @@ class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
             aggregated_weights = self.__FedAvg(n_round_clients, weights_clients_list, sample_size_list)
             acc_list = []
             for i in range(n_round_clients):
-                acc_list.append(self.__callModelValidation(cid_targets[i], aggregated_weights))
+                acc_list.append(self.__callModelValidation(self.clients[cid_targets[i]], aggregated_weights))
     
             self.round += 1
             acc_mean = sum(acc_list)/len(acc_list)
@@ -113,5 +111,5 @@ if __name__ == "__main__":
 
     grpc_server.add_insecure_port('[::]:8080')
     grpc_server.start()
-    fed_server.startServer(2,2,5,1.0,10)
+    fed_server.startServer(3,5,10,1.0,10)
     fed_server.killClients()
