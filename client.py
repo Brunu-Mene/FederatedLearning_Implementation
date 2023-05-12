@@ -7,10 +7,12 @@ from sklearn.model_selection import train_test_split
 from keras.utils import to_categorical
 import random
 import numpy as np
+from concurrent import futures
 
 
 class FedClient(fed_grpc_pb2_grpc.FederatedServiceServicer):
-    def __init__(self, x_train, x_test, y_train, y_test, model, server_adress):
+    def __init__(self, cid, x_train, x_test, y_train, y_test, model, server_adress):
+        self.cid = cid
         self.x_train = x_train
         self.x_test = x_test
         self.y_train = y_train
@@ -21,58 +23,68 @@ class FedClient(fed_grpc_pb2_grpc.FederatedServiceServicer):
     def startLearning(self, request, context):
         self.model.fit(x_train, y_train, epochs=1, verbose=2)
 
-        return fed_grpc_pb2.learningResults(learningWeight = (aux.setWeightSingleList(self.model.get_weights())), sampleSize = (len(self.x_train)))
+        weights = aux.setWeightSingleList(self.model.get_weights())
+        print("local higts:")
+        print(weights[:5])
+        weights = 1.2
+        sampleSize = len(self.x_train)
+        print(type(weights))
+        print(type(sampleSize))
+
+        return fed_grpc_pb2.learningResults(learningWeight=weights, sampleSize=sampleSize)
 
     def modelValidation(self, request, context):
         server_weight = request.weight
         self.model.set_weights(aux.reshapeWeight(server_weight, self.model.get_weights()))
         accuracy = self.model.evaluate(self.x_test, self.y_test, verbose=0)[1]
 
+        print(f"Local accuracy: {accuracy}")
+
         return fed_grpc_pb2.accuracy(acc = (accuracy))
+    
+    def runClient(self):
+        channel = grpc.insecure_channel(server_adress)
+        client = fed_grpc_pb2_grpc.FederatedServiceStub(channel)
+
+        port = server_adress.split(':')[1]
+        port = port[:len(port)-1] + str(int(cid)+1)
+
+        register_out = client.clientRegister(fed_grpc_pb2.registerArgs(ip='[::]:', port=port, cid=self.cid))
+        print(register_out.connectedClient)
+        print(register_out.round)
+
+
+
+        grpc_server = grpc.server(futures.ThreadPoolExecutor(max_workers=1))
+        fed_grpc_pb2_grpc.add_FederatedServiceServicer_to_server(self, grpc_server)
+
+        client_ip = "[::]:"+port
+        print(client_ip)
+        grpc_server.add_insecure_port(client_ip)
+        grpc_server.start()
+        grpc_server.wait_for_termination()
+
 
 if __name__ == '__main__':
     cid = -1
     input_shape = (28, 28, 1)
     num_classes = 10
+    server_adress = 'localhost:8080'
 
     try:
         cid = sys.argv[1]
     except IOError:
-        print("Missing argument! Client Id...")
+        print("Missing argument! You need to pass: Client ServerAdress...")
         exit()
 
     x_train, y_train = aux.load_mnist_byCid(cid)
     x_train, x_test, y_train, y_test = train_test_split(x_train, y_train, test_size=0.2, random_state=42)
+
     # one-hot encode the labels
     y_train = to_categorical(y_train, num_classes)
     y_test = to_categorical(y_test, num_classes)
 
     model = aux.define_model(input_shape,num_classes)
-    model.fit(x_train, y_train, epochs=1, verbose=2)
 
-    weight = aux.setWeightSingleList(model.get_weights())
-    print(weight[:5])
-    print(model.evaluate(x_test, y_test, verbose=0)[1])
-
-    random_weight = weight[:]
-    random.shuffle(random_weight)
-    model.set_weights(aux.reshapeWeight(random_weight, model.get_weights()))
-    print(random_weight[:5])
-    print(model.evaluate(x_test, y_test, verbose=0)[1])
-
-
-
-    weights_clients_list = []
-    weights_clients_list.append(weight)
-    weights_clients_list.append(random_weight)
-
-    aggregated_weights = []
-    for j in range(len(weights_clients_list[0])):
-        element = 0.0
-        for i in range(2):
-            element += weights_clients_list[i][j]
-        aggregated_weights.append(element/2.0)  
-
-    print(aggregated_weights[:5])
-    model.set_weights(aux.reshapeWeight(aggregated_weights, model.get_weights()))
-    print(model.evaluate(x_test, y_test, verbose=0)[1])
+    fed_client = FedClient(cid, x_train, x_test, y_train, y_test, model, server_adress)
+    fed_client.runClient()
