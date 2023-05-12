@@ -5,13 +5,13 @@ import fed_grpc_pb2_grpc
 import fed_grpc_pb2
 from sklearn.model_selection import train_test_split
 from keras.utils import to_categorical
-import random
-import numpy as np
+import os
+import signal
 from concurrent import futures
 
 
 class FedClient(fed_grpc_pb2_grpc.FederatedServiceServicer):
-    def __init__(self, cid, x_train, x_test, y_train, y_test, model, server_adress):
+    def __init__(self, cid, x_train, x_test, y_train, y_test, model, server_adress, client_ip):
         self.cid = cid
         self.x_train = x_train
         self.x_test = x_test
@@ -19,6 +19,21 @@ class FedClient(fed_grpc_pb2_grpc.FederatedServiceServicer):
         self.y_test = y_test
         self.model = model
         self.server_adress = server_adress
+        self.client_ip = client_ip
+
+    def __setClientChannel(self,client_channel):
+        self.client_channel = client_channel
+
+    def __waitingForServer(self,port):
+        client_channel = grpc.server(futures.ThreadPoolExecutor(max_workers=1))
+        self.__setClientChannel(client_channel)
+        fed_grpc_pb2_grpc.add_FederatedServiceServicer_to_server(self, client_channel)
+
+        client_ip = self.client_ip + ':' + port
+
+        client_channel.add_insecure_port(client_ip)
+        client_channel.start()
+        client_channel.wait_for_termination()
 
     def startLearning(self, request, context):
         self.model.fit(x_train, y_train, epochs=1, verbose=2)
@@ -40,32 +55,33 @@ class FedClient(fed_grpc_pb2_grpc.FederatedServiceServicer):
         return fed_grpc_pb2.accuracy(acc = (accuracy))
     
     def runClient(self):
-        channel = grpc.insecure_channel(server_adress)
-        client = fed_grpc_pb2_grpc.FederatedServiceStub(channel)
+        server_channel = grpc.insecure_channel(server_adress)
+        client = fed_grpc_pb2_grpc.FederatedServiceStub(server_channel)
 
         port = server_adress.split(':')[1]
-        port = port[:len(port)-1] + str(int(cid)+1)
+        port = str(int(port) + int(cid) + 1)
 
-        register_out = client.clientRegister(fed_grpc_pb2.registerArgs(ip='[::]:', port=port, cid=self.cid))
-        print(register_out.connectedClient)
-        print(register_out.round)
+        register_out = client.clientRegister(fed_grpc_pb2.registerArgs(ip=self.client_ip, port=port, cid=self.cid))
 
+        if register_out.connectedClient:
+            print(f"Client Conected at round {register_out.round}, waint for server commands...")
+            self.__waitingForServer(port)
+        else:
+            print("This client cound't connect with the server")
 
+    def killClient(self, request, context):
+        print()
+        print(f"Call for closing channel - Killing Client {self.cid}")
+        self.client_channel.stop(0)
 
-        grpc_server = grpc.server(futures.ThreadPoolExecutor(max_workers=1))
-        fed_grpc_pb2_grpc.add_FederatedServiceServicer_to_server(self, grpc_server)
-
-        client_ip = "[::]:"+port
-        grpc_server.add_insecure_port(client_ip)
-        grpc_server.start()
-        grpc_server.wait_for_termination()
-
+        return fed_grpc_pb2.void()
 
 if __name__ == '__main__':
     cid = -1
     input_shape = (28, 28, 1)
     num_classes = 10
     server_adress = 'localhost:8080'
+    client_ip = '[::]'
 
     try:
         cid = sys.argv[1]
@@ -82,5 +98,5 @@ if __name__ == '__main__':
 
     model = aux.define_model(input_shape,num_classes)
 
-    fed_client = FedClient(cid, x_train, x_test, y_train, y_test, model, server_adress)
+    fed_client = FedClient(cid, x_train, x_test, y_train, y_test, model, server_adress, client_ip)
     fed_client.runClient()

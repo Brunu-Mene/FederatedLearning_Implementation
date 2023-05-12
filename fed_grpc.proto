@@ -33,4 +33,5 @@ service FederatedService {
     rpc startLearning(void) returns (weightList);
     rpc getSampleSize(void) returns (sampleSize);
     rpc modelValidation(weightList) returns (accuracy);
+    rpc killClient(void) returns (void);
 }

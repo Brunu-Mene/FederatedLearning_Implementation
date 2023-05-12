@@ -6,6 +6,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPool2D,Flatten,Dense
 from tensorflow.keras.optimizers import SGD
 from keras.utils import to_categorical
+import random
 
 def load_mnist_byCid(cid):
     data = []
@@ -62,3 +63,7 @@ def reshapeWeight(server_weight, client_weight):
         server_weight = server_weight[n_weights:]
 
     return reshape_weight
+
+def createRandomClientList(clients_dictionary, n_round_clients):
+    keys = list(clients_dictionary.keys())
+    return random.sample(keys, n_round_clients)
