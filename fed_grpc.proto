@@ -13,16 +13,15 @@ message registerOut {
     int32 round = 2;
 }
 
-message learningResults {
-    repeated float learningWeight = 1;
-    int32 sampleSize = 2;
+message sampleSize{
+    int32 size = 1;
 }
 
 message accuracy {
     float acc = 1;
 }
 
-message aggregationWeight {
+message weightList {
     repeated float weight = 1;
 }
 
@@ -31,6 +30,7 @@ message void {
 
 service FederatedService {
     rpc clientRegister(registerArgs) returns (registerOut);
-    rpc startLearning(void) returns (learningResults);
-    rpc modelValidation(aggregationWeight) returns (accuracy);
+    rpc startLearning(void) returns (weightList);
+    rpc getSampleSize(void) returns (sampleSize);
+    rpc modelValidation(weightList) returns (accuracy);
 }

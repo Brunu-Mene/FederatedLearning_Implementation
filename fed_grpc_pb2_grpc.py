@@ -22,11 +22,16 @@ class FederatedServiceStub(object):
         self.startLearning = channel.unary_unary(
                 '/main.FederatedService/startLearning',
                 request_serializer=fed__grpc__pb2.void.SerializeToString,
-                response_deserializer=fed__grpc__pb2.learningResults.FromString,
+                response_deserializer=fed__grpc__pb2.weightList.FromString,
+                )
+        self.getSampleSize = channel.unary_unary(
+                '/main.FederatedService/getSampleSize',
+                request_serializer=fed__grpc__pb2.void.SerializeToString,
+                response_deserializer=fed__grpc__pb2.sampleSize.FromString,
                 )
         self.modelValidation = channel.unary_unary(
                 '/main.FederatedService/modelValidation',
-                request_serializer=fed__grpc__pb2.aggregationWeight.SerializeToString,
+                request_serializer=fed__grpc__pb2.weightList.SerializeToString,
                 response_deserializer=fed__grpc__pb2.accuracy.FromString,
                 )
 
@@ -41,6 +46,12 @@ class FederatedServiceServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def startLearning(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def getSampleSize(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -63,11 +74,16 @@ def add_FederatedServiceServicer_to_server(servicer, server):
             'startLearning': grpc.unary_unary_rpc_method_handler(
                     servicer.startLearning,
                     request_deserializer=fed__grpc__pb2.void.FromString,
-                    response_serializer=fed__grpc__pb2.learningResults.SerializeToString,
+                    response_serializer=fed__grpc__pb2.weightList.SerializeToString,
+            ),
+            'getSampleSize': grpc.unary_unary_rpc_method_handler(
+                    servicer.getSampleSize,
+                    request_deserializer=fed__grpc__pb2.void.FromString,
+                    response_serializer=fed__grpc__pb2.sampleSize.SerializeToString,
             ),
             'modelValidation': grpc.unary_unary_rpc_method_handler(
                     servicer.modelValidation,
-                    request_deserializer=fed__grpc__pb2.aggregationWeight.FromString,
+                    request_deserializer=fed__grpc__pb2.weightList.FromString,
                     response_serializer=fed__grpc__pb2.accuracy.SerializeToString,
             ),
     }
@@ -110,7 +126,24 @@ class FederatedService(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/main.FederatedService/startLearning',
             fed__grpc__pb2.void.SerializeToString,
-            fed__grpc__pb2.learningResults.FromString,
+            fed__grpc__pb2.weightList.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def getSampleSize(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/main.FederatedService/getSampleSize',
+            fed__grpc__pb2.void.SerializeToString,
+            fed__grpc__pb2.sampleSize.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -126,7 +159,7 @@ class FederatedService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/main.FederatedService/modelValidation',
-            fed__grpc__pb2.aggregationWeight.SerializeToString,
+            fed__grpc__pb2.weightList.SerializeToString,
             fed__grpc__pb2.accuracy.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

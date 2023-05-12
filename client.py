@@ -23,22 +23,19 @@ class FedClient(fed_grpc_pb2_grpc.FederatedServiceServicer):
     def startLearning(self, request, context):
         self.model.fit(x_train, y_train, epochs=1, verbose=2)
 
-        weights = aux.setWeightSingleList(self.model.get_weights())
-        print("local higts:")
-        print(weights[:5])
-        weights = 1.2
-        sampleSize = len(self.x_train)
-        print(type(weights))
-        print(type(sampleSize))
+        weights_list = aux.setWeightSingleList(self.model.get_weights())
 
-        return fed_grpc_pb2.learningResults(learningWeight=weights, sampleSize=sampleSize)
+        return fed_grpc_pb2.weightList(weight = (weights_list))
+    
+    def getSampleSize(self, request, context):
+        return fed_grpc_pb2.sampleSize(size = (len(self.x_train)))
 
     def modelValidation(self, request, context):
         server_weight = request.weight
         self.model.set_weights(aux.reshapeWeight(server_weight, self.model.get_weights()))
         accuracy = self.model.evaluate(self.x_test, self.y_test, verbose=0)[1]
 
-        print(f"Local accuracy: {accuracy}")
+        print(f"Local accuracy with global weights: {accuracy}")
 
         return fed_grpc_pb2.accuracy(acc = (accuracy))
     
@@ -59,7 +56,6 @@ class FedClient(fed_grpc_pb2_grpc.FederatedServiceServicer):
         fed_grpc_pb2_grpc.add_FederatedServiceServicer_to_server(self, grpc_server)
 
         client_ip = "[::]:"+port
-        print(client_ip)
         grpc_server.add_insecure_port(client_ip)
         grpc_server.start()
         grpc_server.wait_for_termination()
