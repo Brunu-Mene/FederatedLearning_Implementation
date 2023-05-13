@@ -35,10 +35,13 @@ class FedClient(fed_grpc_pb2_grpc.FederatedServiceServicer):
         client_channel.start()
         client_channel.wait_for_termination()
 
-    def startLearning(self, request, context):
+    def popClients(self, request, context):
         ac_round = request.round
         print()
         print(f"Starting {ac_round} round")
+        return fed_grpc_pb2.void()
+
+    def startLearning(self, request, context):
         self.model.fit(x_train, y_train, epochs=1, verbose=2)
 
         weights_list = aux.setWeightSingleList(self.model.get_weights())
@@ -58,10 +61,10 @@ class FedClient(fed_grpc_pb2_grpc.FederatedServiceServicer):
         return fed_grpc_pb2.accuracy(acc = (accuracy))
     
     def runClient(self):
-        server_channel = grpc.insecure_channel(server_adress)
+        server_channel = grpc.insecure_channel(self.server_adress)
         client = fed_grpc_pb2_grpc.FederatedServiceStub(server_channel)
 
-        port = server_adress.split(':')[1]
+        port = self.server_adress.split(':')[1]
         port = str(int(port) + int(cid) + 1)
 
         register_out = client.clientRegister(fed_grpc_pb2.registerArgs(ip=self.client_ip, port=port, cid=self.cid))

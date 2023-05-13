@@ -21,7 +21,7 @@ class FederatedServiceStub(object):
                 )
         self.startLearning = channel.unary_unary(
                 '/main.FederatedService/startLearning',
-                request_serializer=fed__grpc__pb2.currentRound.SerializeToString,
+                request_serializer=fed__grpc__pb2.void.SerializeToString,
                 response_deserializer=fed__grpc__pb2.weightList.FromString,
                 )
         self.getSampleSize = channel.unary_unary(
@@ -41,7 +41,7 @@ class FederatedServiceStub(object):
                 )
         self.popClient = channel.unary_unary(
                 '/main.FederatedService/popClient',
-                request_serializer=fed__grpc__pb2.void.SerializeToString,
+                request_serializer=fed__grpc__pb2.currentRound.SerializeToString,
                 response_deserializer=fed__grpc__pb2.void.FromString,
                 )
 
@@ -95,7 +95,7 @@ def add_FederatedServiceServicer_to_server(servicer, server):
             ),
             'startLearning': grpc.unary_unary_rpc_method_handler(
                     servicer.startLearning,
-                    request_deserializer=fed__grpc__pb2.currentRound.FromString,
+                    request_deserializer=fed__grpc__pb2.void.FromString,
                     response_serializer=fed__grpc__pb2.weightList.SerializeToString,
             ),
             'getSampleSize': grpc.unary_unary_rpc_method_handler(
@@ -115,7 +115,7 @@ def add_FederatedServiceServicer_to_server(servicer, server):
             ),
             'popClient': grpc.unary_unary_rpc_method_handler(
                     servicer.popClient,
-                    request_deserializer=fed__grpc__pb2.void.FromString,
+                    request_deserializer=fed__grpc__pb2.currentRound.FromString,
                     response_serializer=fed__grpc__pb2.void.SerializeToString,
             ),
     }
@@ -157,7 +157,7 @@ class FederatedService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/main.FederatedService/startLearning',
-            fed__grpc__pb2.currentRound.SerializeToString,
+            fed__grpc__pb2.void.SerializeToString,
             fed__grpc__pb2.weightList.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
@@ -225,7 +225,7 @@ class FederatedService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/main.FederatedService/popClient',
-            fed__grpc__pb2.void.SerializeToString,
+            fed__grpc__pb2.currentRound.SerializeToString,
             fed__grpc__pb2.void.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

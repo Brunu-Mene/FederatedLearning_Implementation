@@ -34,9 +34,9 @@ message void {
 
 service FederatedService {
     rpc clientRegister(registerArgs) returns (registerOut);
-    rpc startLearning(currentRound) returns (weightList);
+    rpc startLearning(void) returns (weightList);
     rpc getSampleSize(void) returns (sampleSize);
     rpc modelValidation(weightList) returns (accuracy);
     rpc killClient(void) returns (void);
-    rpc popClient(void) returns (void);
+    rpc popClient(currentRound) returns (void);
 }
