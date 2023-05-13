@@ -12,7 +12,7 @@ class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
         self.clients = {}
         self.round = 0
 
-    def __popClients(self):
+    def __popClient(self):
         for cid in self.clients:
             channel = grpc.insecure_channel(self.clients[cid])
             client = fed_grpc_pb2_grpc.FederatedServiceStub(channel)
@@ -76,7 +76,7 @@ class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
                 print("The minimum number of clients has been reached, starting learning...")
                 time.sleep(1)
             self.round += 1
-            self.__popClients()
+            self.__popClient()
 
             if n_round_clients > len(self.clients):
                 n_round_clients = len(self.clients)
@@ -118,5 +118,5 @@ if __name__ == "__main__":
 
     grpc_server.add_insecure_port('[::]:8080')
     grpc_server.start()
-    fed_server.startServer(1,2,10,1.0,10)
+    fed_server.startServer(1, 2, 10, 1.0, 10)
     fed_server.killClients()

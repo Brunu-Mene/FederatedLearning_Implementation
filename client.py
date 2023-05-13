@@ -35,7 +35,7 @@ class FedClient(fed_grpc_pb2_grpc.FederatedServiceServicer):
         client_channel.start()
         client_channel.wait_for_termination()
 
-    def popClients(self, request, context):
+    def popClient(self, request, context):
         ac_round = request.round
         print()
         print(f"Starting {ac_round} round")
@@ -81,10 +81,6 @@ class FedClient(fed_grpc_pb2_grpc.FederatedServiceServicer):
         self.client_channel.stop(0)
 
         return fed_grpc_pb2.void()
-    
-    def popClient(self, request, context) :
-    
-        return fed_grpc_pb2.void()
 
 if __name__ == '__main__':
     cid = -1
@@ -95,12 +91,13 @@ if __name__ == '__main__':
 
     try:
         cid = sys.argv[1]
-    except IOError:
+    except IndexError:
         print("Missing argument! You need to pass: Client ServerAdress...")
         exit()
 
     x_train, y_train = aux.load_mnist_byCid(cid)
     x_train, x_test, y_train, y_test = train_test_split(x_train, y_train, test_size=0.2, random_state=42)
+
 
     # one-hot encode the labels
     y_train = to_categorical(y_train, num_classes)
