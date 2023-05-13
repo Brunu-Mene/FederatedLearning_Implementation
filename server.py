@@ -8,6 +8,7 @@ import numpy as np
 from concurrent import futures
 import queue
 import aux
+import time
 
 
 class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
@@ -42,6 +43,19 @@ class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
         
         return aggregated_weights
 
+    def __PopClients(self):
+        clients = self.clients.copy()
+        for cid in clients:
+            try:
+                channel = grpc.insecure_channel(self.clients[cid])
+
+                client = fed_grpc_pb2_grpc.FederatedServiceStub(channel)
+                client.popClient(fed_grpc_pb2.void())
+
+            except grpc.RpcError as e:
+                print(f"Lost connection with client {cid}, removing from dictionary")
+                del self.clients[cid]
+
     def killClients(self):
         for cid in self.clients:
             channel = grpc.insecure_channel(self.clients[cid])
@@ -71,7 +85,10 @@ class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
                     continue
 
                 print("The minimum number of clients has been reached, starting learning...")
+                time.sleep(1)
 
+            if n_round_clients > len(self.clients):
+                n_round_clients = len(self.clients)
             cid_targets = aux.createRandomClientList(self.clients, n_round_clients)
 
             thread_list = []
@@ -111,5 +128,5 @@ if __name__ == "__main__":
 
     grpc_server.add_insecure_port('[::]:8080')
     grpc_server.start()
-    fed_server.startServer(3,5,10,1.0,10)
+    fed_server.startServer(3,3,10,1.0,10)
     fed_server.killClients()

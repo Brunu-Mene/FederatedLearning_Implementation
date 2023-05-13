@@ -78,6 +78,10 @@ class FedClient(fed_grpc_pb2_grpc.FederatedServiceServicer):
         self.client_channel.stop(0)
 
         return fed_grpc_pb2.void()
+    
+    def popClient(self, request, context) :
+    
+        return fed_grpc_pb2.void()
 
 if __name__ == '__main__':
     cid = -1

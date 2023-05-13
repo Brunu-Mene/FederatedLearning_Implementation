@@ -39,6 +39,11 @@ class FederatedServiceStub(object):
                 request_serializer=fed__grpc__pb2.void.SerializeToString,
                 response_deserializer=fed__grpc__pb2.void.FromString,
                 )
+        self.popClient = channel.unary_unary(
+                '/main.FederatedService/popClient',
+                request_serializer=fed__grpc__pb2.void.SerializeToString,
+                response_deserializer=fed__grpc__pb2.void.FromString,
+                )
 
 
 class FederatedServiceServicer(object):
@@ -74,6 +79,12 @@ class FederatedServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def popClient(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_FederatedServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -99,6 +110,11 @@ def add_FederatedServiceServicer_to_server(servicer, server):
             ),
             'killClient': grpc.unary_unary_rpc_method_handler(
                     servicer.killClient,
+                    request_deserializer=fed__grpc__pb2.void.FromString,
+                    response_serializer=fed__grpc__pb2.void.SerializeToString,
+            ),
+            'popClient': grpc.unary_unary_rpc_method_handler(
+                    servicer.popClient,
                     request_deserializer=fed__grpc__pb2.void.FromString,
                     response_serializer=fed__grpc__pb2.void.SerializeToString,
             ),
@@ -192,6 +208,23 @@ class FederatedService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/main.FederatedService/killClient',
+            fed__grpc__pb2.void.SerializeToString,
+            fed__grpc__pb2.void.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def popClient(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/main.FederatedService/popClient',
             fed__grpc__pb2.void.SerializeToString,
             fed__grpc__pb2.void.FromString,
             options, channel_credentials,
