@@ -118,5 +118,5 @@ if __name__ == "__main__":
 
     grpc_server.add_insecure_port('[::]:8080')
     grpc_server.start()
-    fed_server.startServer(1,2,10,1.0,10)
+    fed_server.startServer(1, 2, 10, 1.0, 10)
     fed_server.killClients()
