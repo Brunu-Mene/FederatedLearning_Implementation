@@ -12,12 +12,12 @@ class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
         self.clients = {}
         self.round = 0
 
-    def __popClients(self):
+    def __sendRound(self):
         for cid in self.clients:
             channel = grpc.insecure_channel(self.clients[cid])
             client = fed_grpc_pb2_grpc.FederatedServiceStub(channel)
 
-            client.popClient(fed_grpc_pb2.currentRound(round = (self.round)))
+            client.sendRound(fed_grpc_pb2.currentRound(round = (self.round)))
 
     def __callClientLearning(self, client_ip, q):
         channel = grpc.insecure_channel(client_ip)
@@ -76,7 +76,7 @@ class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
                 print("The minimum number of clients has been reached, starting learning...")
                 time.sleep(1)
             self.round += 1
-            self.__popClients()
+            self.__sendRound()
 
             if n_round_clients > len(self.clients):
                 n_round_clients = len(self.clients)

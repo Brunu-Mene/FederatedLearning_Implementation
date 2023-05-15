@@ -35,7 +35,7 @@ class FedClient(fed_grpc_pb2_grpc.FederatedServiceServicer):
         client_channel.start()
         client_channel.wait_for_termination()
 
-    def popClients(self, request, context):
+    def sendRound(self, request, context):
         ac_round = request.round
         print()
         print(f"Starting {ac_round} round")
