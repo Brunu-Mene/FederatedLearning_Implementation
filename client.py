@@ -65,7 +65,7 @@ class FedClient(fed_grpc_pb2_grpc.FederatedServiceServicer):
         client = fed_grpc_pb2_grpc.FederatedServiceStub(server_channel)
 
         port = self.server_adress.split(':')[1]
-        port = str(int(port) + int(cid) + 1)
+        port = str(30000 + int(self.cid))
 
         register_out = client.clientRegister(fed_grpc_pb2.registerArgs(ip=self.client_ip, port=port, cid=self.cid))
 
@@ -75,6 +75,7 @@ class FedClient(fed_grpc_pb2_grpc.FederatedServiceServicer):
         else:
             print("This client cound't connect with the server")
 
+        
     def killClient(self, request, context):
         print()
         print(f"Call for closing channel - Killing Client {self.cid}")

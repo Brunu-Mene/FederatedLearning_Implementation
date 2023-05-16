@@ -11,6 +11,7 @@ class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
     def __init__(self):
         self.clients = {}
         self.round = 0
+        self.avalable_for_register = True
 
     def __sendRound(self):
         for cid in self.clients:
@@ -40,9 +41,11 @@ class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
         aggregated_weights = []
         for j in range(len(weights_clients_list[0])):
             element = 0.0
+            sample_sum = 0.0
             for i in range(n_clients):
-                element += weights_clients_list[i][j]
-            aggregated_weights.append(element/n_clients)  
+                sample_sum += sample_size_list[i]
+                element += weights_clients_list[i][j] * sample_size_list[i]
+            aggregated_weights.append(element/sample_sum)  
         
         return aggregated_weights
 
@@ -58,6 +61,9 @@ class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
         port = request.port
         cid = int(request.cid)
 
+        while self.avalable_for_register == False:
+            continue
+
         if cid in self.clients:
             print(f"Cound'not regist Client with ID {cid} - Duplicated Id")
             return fed_grpc_pb2.registerOut(connectedClient = (False), round = (self.round))
@@ -66,20 +72,23 @@ class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
         print(f"Client {cid} registed!")
         return fed_grpc_pb2.registerOut(connectedClient = (True), round = (self.round))
     
-    def startServer(self, n_round_clients, min_clients, max_rounds, acc_target, timeout):
+    def startServer(self, n_round_clients, min_clients, max_rounds, acc_target):
         while self.round < max_rounds:
             if len(self.clients) < min_clients:
                 print("Waiting for the minimun number of clients to connect...")
                 while len(self.clients) < min_clients:
                     continue
 
-                print("The minimum number of clients has been reached, starting learning...")
-                time.sleep(1)
-            self.round += 1
-            self.__sendRound()
+                print("The minimum number of clients has been reached.")
+            
+            ## waint for possible late clients
+            self.avalable_for_register = True
+            time.sleep(0.5)
 
-            if n_round_clients > len(self.clients):
-                n_round_clients = len(self.clients)
+            self.__sendRound()
+            self.avalable_for_register = False
+            self.round += 1
+
             cid_targets = aux.createRandomClientList(self.clients, n_round_clients)
 
             thread_list = []
@@ -118,5 +127,5 @@ if __name__ == "__main__":
 
     grpc_server.add_insecure_port('[::]:8080')
     grpc_server.start()
-    fed_server.startServer(1, 2, 10, 1.0, 10)
+    fed_server.startServer(2, 2, 10, 1.0)
     fed_server.killClients()
