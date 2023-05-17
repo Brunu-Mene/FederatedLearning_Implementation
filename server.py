@@ -6,6 +6,7 @@ from concurrent import futures
 import queue
 import aux
 import time
+import sys
 
 class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
     def __init__(self):
@@ -13,6 +14,7 @@ class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
         self.round = 0
         self.avalable_for_register = True
 
+    # Envia round atual para todos os clientes
     def __sendRound(self):
         for cid in self.clients:
             channel = grpc.insecure_channel(self.clients[cid])
@@ -20,6 +22,7 @@ class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
 
             client.sendRound(fed_grpc_pb2.currentRound(round = (self.round)))
 
+    # Inicia treinamento de determinado clientes
     def __callClientLearning(self, client_ip, q):
         channel = grpc.insecure_channel(client_ip)
         client = fed_grpc_pb2_grpc.FederatedServiceStub(channel)
@@ -29,14 +32,18 @@ class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
 
         q.put([weight_list, sample_size])
 
-    def __callModelValidation(self, client_ip, aggregated_weights):
-        channel = grpc.insecure_channel(client_ip)
+    # Teste para nova lista de pesos global
+    def __callModelValidation(self, aggregated_weights):
+        acc_list = []
+        for cid in self.clients:
+            channel = grpc.insecure_channel(self.clients[cid])
 
-        client = fed_grpc_pb2_grpc.FederatedServiceStub(channel)
-        acc = client.modelValidation(fed_grpc_pb2.weightList(weight = (aggregated_weights))).acc
+            client = fed_grpc_pb2_grpc.FederatedServiceStub(channel)
+            acc_list.append(client.modelValidation(fed_grpc_pb2.weightList(weight = (aggregated_weights))).acc)
 
-        return acc
+        return acc_list
     
+    # Calcula a média ponderada dos pesos resultantes do treino
     def __FedAvg(self, n_clients, weights_clients_list, sample_size_list):
         aggregated_weights = []
         for j in range(len(weights_clients_list[0])):
@@ -48,7 +55,8 @@ class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
             aggregated_weights.append(element/sample_sum)  
         
         return aggregated_weights
-
+    
+    # Encerra estado de wait_for_termination dos clients
     def killClients(self):
         for cid in self.clients:
             channel = grpc.insecure_channel(self.clients[cid])
@@ -61,6 +69,7 @@ class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
         port = request.port
         cid = int(request.cid)
 
+        # Esperando disponibilidade de registro para novo client
         while self.avalable_for_register == False:
             continue
 
@@ -74,6 +83,7 @@ class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
     
     def startServer(self, n_round_clients, min_clients, max_rounds, acc_target):
         while self.round < max_rounds:
+            #Verificando se o mínimo de clientes foi estabelecido
             if len(self.clients) < min_clients:
                 print("Waiting for the minimun number of clients to connect...")
                 while len(self.clients) < min_clients:
@@ -81,16 +91,18 @@ class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
 
                 print("The minimum number of clients has been reached.")
             
-            ## waint for possible late clients
+            # Sincronização para admitir a entrada de novos clientes após início do server
             self.avalable_for_register = True
             time.sleep(0.5)
 
-            self.__sendRound()
-            self.avalable_for_register = False
             self.round += 1
+            self.avalable_for_register = False
+            self.__sendRound()
 
+            # Criando lista de clientes alvo
             cid_targets = aux.createRandomClientList(self.clients, n_round_clients)
 
+            # Inicializando chamada de aprendizado para os clients
             thread_list = []
             q = queue.Queue()
             for i in range(n_round_clients):
@@ -100,6 +112,7 @@ class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
             for thread in thread_list:
                 thread.join()
 
+            # Capturando lista de pesos resultantes do treinamento
             weights_clients_list = []
             sample_size_list = []
             while not q.empty():
@@ -108,10 +121,11 @@ class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
                 weights_clients_list.append(thread_results[0])
                 sample_size_list.append(thread_results[1])
 
+            # Agregando lista de pesos
             aggregated_weights = self.__FedAvg(n_round_clients, weights_clients_list, sample_size_list)
-            acc_list = []
-            for cid in self.clients:
-                acc_list.append(self.__callModelValidation(self.clients[cid], aggregated_weights))
+
+            # Validando o modelo global
+            acc_list = self.__callModelValidation(aggregated_weights)
     
             acc_global = sum(acc_list)/len(acc_list)
             print(f"Round: {self.round} / Accuracy Mean: {acc_global}")
@@ -120,12 +134,23 @@ class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
                 break
 
 if __name__ == "__main__":
+    try:
+        n_round_clients = int(sys.argv[1])
+        min_clients = int(sys.argv[2])
+        max_rounds = int(sys.argv[3])
+        acc_target = float(sys.argv[4])
+
+    except IndexError:
+        print("Missing argument! You need to pass: (clientsRound, minClients, maxRounds, accuracyTarget)")
+        exit()
+
     fed_server = FedServer()
 
+    #creating grpc server at ip [::]:8080
     grpc_server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     fed_grpc_pb2_grpc.add_FederatedServiceServicer_to_server(fed_server, grpc_server)
-
     grpc_server.add_insecure_port('[::]:8080')
     grpc_server.start()
-    fed_server.startServer(2, 2, 10, 1.0)
+
+    fed_server.startServer(n_round_clients, min_clients, max_rounds, acc_target)
     fed_server.killClients()

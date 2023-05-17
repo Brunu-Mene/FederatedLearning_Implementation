@@ -20,10 +20,11 @@ class FedClient(fed_grpc_pb2_grpc.FederatedServiceServicer):
         self.model = model
         self.server_adress = server_adress
         self.client_ip = client_ip
-
+    
     def __setClientChannel(self,client_channel):
         self.client_channel = client_channel
 
+    # Inicia canal grpc para aguardar chamada de funções do servidor
     def __waitingForServer(self,port):
         client_channel = grpc.server(futures.ThreadPoolExecutor(max_workers=1))
         self.__setClientChannel(client_channel)
@@ -35,12 +36,14 @@ class FedClient(fed_grpc_pb2_grpc.FederatedServiceServicer):
         client_channel.start()
         client_channel.wait_for_termination()
 
+    # Obtem round atual enviado pelo servidor
     def sendRound(self, request, context):
         ac_round = request.round
         print()
         print(f"Starting {ac_round} round")
         return fed_grpc_pb2.void()
 
+    # Inicia rodada de aprendizado e retorna pesos obtidos
     def startLearning(self, request, context):
         self.model.fit(x_train, y_train, epochs=1, verbose=2)
 
@@ -48,9 +51,11 @@ class FedClient(fed_grpc_pb2_grpc.FederatedServiceServicer):
 
         return fed_grpc_pb2.weightList(weight = (weights_list))
     
+    # Obtem tamanho da base de traino
     def getSampleSize(self, request, context):
         return fed_grpc_pb2.sampleSize(size = (len(self.x_train)))
 
+    # Atualiza pesos locais para pesos globais e obtem acurácia do novo modelo
     def modelValidation(self, request, context):
         server_weight = request.weight
         self.model.set_weights(aux.reshapeWeight(server_weight, self.model.get_weights()))
@@ -60,10 +65,20 @@ class FedClient(fed_grpc_pb2_grpc.FederatedServiceServicer):
 
         return fed_grpc_pb2.accuracy(acc = (accuracy))
     
+    # Finaliza estado de wait_for_termination()
+    def killClient(self, request, context):
+        print()
+        print(f"Call for closing channel - Killing Client {self.cid}")
+        self.client_channel.stop(0)
+
+        return fed_grpc_pb2.void()
+    
     def runClient(self):
+        # Estabelecendo canal grpc com servidor
         server_channel = grpc.insecure_channel(self.server_adress)
         client = fed_grpc_pb2_grpc.FederatedServiceStub(server_channel)
 
+        #criando porta para o client
         port = self.server_adress.split(':')[1]
         port = str(30000 + int(self.cid))
 
@@ -75,13 +90,6 @@ class FedClient(fed_grpc_pb2_grpc.FederatedServiceServicer):
         else:
             print("This client cound't connect with the server")
 
-        
-    def killClient(self, request, context):
-        print()
-        print(f"Call for closing channel - Killing Client {self.cid}")
-        self.client_channel.stop(0)
-
-        return fed_grpc_pb2.void()
 
 if __name__ == '__main__':
     cid = -1
@@ -93,14 +101,14 @@ if __name__ == '__main__':
     try:
         cid = sys.argv[1]
     except IndexError:
-        print("Missing argument! You need to pass: Client ServerAdress...")
+        print("Missing argument! You need to pass: ClientId")
         exit()
 
+    # Carregando e dividindo dataSet
     x_train, y_train = aux.load_mnist_byCid(cid)
     x_train, x_test, y_train, y_test = train_test_split(x_train, y_train, test_size=0.2, random_state=42)
 
-
-    # one-hot encode the labels
+    # One-hot encode labels
     y_train = to_categorical(y_train, num_classes)
     y_test = to_categorical(y_test, num_classes)
 
