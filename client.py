@@ -45,7 +45,7 @@ class FedClient(fed_grpc_pb2_grpc.FederatedServiceServicer):
 
     # Inicia rodada de aprendizado e retorna pesos obtidos
     def startLearning(self, request, context):
-        self.model.fit(x_train, y_train, epochs=1, verbose=2)
+        self.model.fit(self.x_train, self.y_train, epochs=1, verbose=2)
 
         weights_list = aux.setWeightSingleList(self.model.get_weights())
 
