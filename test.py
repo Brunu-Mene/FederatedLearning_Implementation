@@ -8,4 +8,4 @@ os.system('git commit -am "tesReadMe"')
 os.system(f"git add {root}/test.py")
 os.system('git commit -am "tesTest"')
 
-os.system("git push origin master")
+os.system("git push")
