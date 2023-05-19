@@ -17,7 +17,7 @@ Em sequência, deve-se iniciar o servidor. É necessário passar como argumentos
 $ python3 server.py 2 2 10 1.0
 ```
 
-Por fim, devem ser iniciados os clientes (utilizando um novo terminal para cada cliente). É necessário passar como argumento o ID do cliente. A linha de comando do cliente de ID 1, por exemplo, ficará da seguinte forma:
+Por fim, devem ser iniciados os clientes (utilizando um novo terminal para cada cliente). É necessário passar como argumento o ID do cliente, vale destacar que devemos obedecer a estrutura de diretórios criados em */mnist_data*, dessa forma o respectivo ID a ser passado deve se referir a uma pasta criada. A linha de comando do cliente de ID 1 que acessará os dados do diretório */mnist_data/client_1*, ficará da seguinte forma:
 
 ```
 $ python3 client.py 1
