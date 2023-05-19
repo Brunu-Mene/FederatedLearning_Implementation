@@ -85,10 +85,10 @@ class FedClient(fed_grpc_pb2_grpc.FederatedServiceServicer):
         register_out = client.clientRegister(fed_grpc_pb2.registerArgs(ip=self.client_ip, port=port, cid=self.cid))
 
         if register_out.connectedClient:
-            print(f"Client Conected at round {register_out.round}, waint for server commands...")
+            print(f"Client Connected at round {register_out.round}, waiting for server commands...")
             self.__waitingForServer(port)
         else:
-            print("This client cound't connect with the server")
+            print("This client couldn't connect with the server")
 
 
 if __name__ == '__main__':

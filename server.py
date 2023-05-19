@@ -74,18 +74,18 @@ class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
             continue
 
         if cid in self.clients:
-            print(f"Cound'not regist Client with ID {cid} - Duplicated Id")
+            print(f"Could not register Client with ID {cid} - Duplicated Id")
             return fed_grpc_pb2.registerOut(connectedClient = (False), round = (self.round))
         
         self.clients[cid] = ip + ":" + port
-        print(f"Client {cid} registed!")
+        print(f"Client {cid} registered!")
         return fed_grpc_pb2.registerOut(connectedClient = (True), round = (self.round))
     
     def startServer(self, n_round_clients, min_clients, max_rounds, acc_target):
         while self.round < max_rounds:
             #Verificando se o mínimo de clientes foi estabelecido
             if len(self.clients) < min_clients:
-                print("Waiting for the minimun number of clients to connect...")
+                print("Waiting for the minimum number of clients to connect...")
                 while len(self.clients) < min_clients:
                     continue
 
@@ -130,7 +130,7 @@ class FedServer(fed_grpc_pb2_grpc.FederatedServiceServicer):
             acc_global = sum(acc_list)/len(acc_list)
             print(f"Round: {self.round} / Accuracy Mean: {acc_global}")
             if acc_global >= acc_target:
-                print("Accuracy Target as been Achieved! Ending process")
+                print("Accuracy Target has been achieved! Ending process")
                 break
 
 if __name__ == "__main__":

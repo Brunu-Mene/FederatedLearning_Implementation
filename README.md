@@ -1,4 +1,38 @@
-# FederatedLearning_Implementation
-Primeiro Trabalho da disciplina de Sistemas Distribuidos - Implementação de Aprendizado Federado com GRPC
+# Trabalho T1 – Implementação de Aprendizado Federado
+## Integrantes: Bruno Menegaz, Gustavo Dutra, Leonardo Albergaria
+---
+## Instruções para Compilação e Execução
 
-python3 -m grpc_tools.protoc --proto_path=. ./fed_grpc.proto --python_out=. --grpc_python_out=.
+Para realizar a instalação basta clonar o repositório para um diretório local e realizar a instalação do python e das bibliotecas *grpc*, *tensorflow*, *imutils*, *sklearn*m *pillow* e *cv2* caso elas não estejam na sua máquina.
+
+Como cada cliente roda em um processo distinto, é necessário dividir previamente a base de dados. Para isso, ao executar o programa **getSplitData**, são criadas pastas com dados para cada cliente. Dessa forma, cada cliente utilizará uma parte dos dados da base Mnist para realizar o treinamento. O repositório contém os dados separados para 3 clientes, então caso haja necessidade de usar uma quantidade diferente de clientes, deve ser executado o seguinte comando (5 clientes neste exemplo):
+
+```
+$ python3 getSplitData.py 5
+```
+
+Em sequência, deve-se iniciar o servidor. É necessário passar como argumentos **clientsRound**, **minClients**, **maxRounds** e **accuracyTarget**. Em Linux, a linha de comando ficará da seguinte forma, para 2 clientes por round, mínimo de 2 clients, máximo de 10 rounds e accuracy target de 1.0:
+
+```
+$ python3 server.py 2 2 10 1.0
+```
+
+Por fim, devem ser iniciados os clientes (utilizando um novo terminal para cada cliente). É necessário passar como argumento o ID do cliente. A linha de comando do cliente de ID 1, por exemplo, ficará da seguinte forma:
+
+```
+$ python3 client.py 1
+```
+
+---
+## Link para o vídeo no Drive
+
+> https://drive.google.com/file/d/1FsVUoKMTNmcZCnra4a8NeBoQpfEOSrgd/view
+
+---
+## Implementação
+Explicar como funciona o server e o client, 
+
+
+### Server
+
+### Client
