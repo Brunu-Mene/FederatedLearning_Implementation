@@ -30,7 +30,7 @@ $ python3 client.py 1
 
 ---
 ## Implementação
-Explicar como funciona o server e o client, 
+Explicar como funciona o server e o client, explicar funções principais do .proto, plotar os graficos
 
 
 ### Server
