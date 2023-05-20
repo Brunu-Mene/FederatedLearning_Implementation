@@ -77,7 +77,13 @@ Se a acurácia global média atingir ou ultrapassar a meta de acurácia especifi
 
 #### **Funcionamento**:
 
-O cliente
+O cliente inicia obtendo os dados de treinamento específicos para um determinado ID de cliente (cid). Esses dados são os que foram pré-estabelecidos pelo script *getSplitData.py* e representam um subconjunto dos dados de treinamento disponíveis.
+
+Após carregar os dados de treinamento, o cliente chama a função runClient, que tem a responsabilidade de estabelecer uma conexão gRPC com o servidor, criar uma porta para o cliente e enviar uma solicitação de registro para o servidor. O registro é necessário para que o servidor saiba que o cliente está disponível para participar do treinamento federado. Se o registro for bem-sucedido, o cliente entra em um estado de espera por comandos do servidor, utilizando o método __waitingForServer para receber, processar esses comandos e executar as funções necessárias conforme solicitado pelo servidor. Por exemplo, o servidor pode enviar comandos para atualizar os pesos do modelo do cliente, solicitar que o cliente execute uma etapa de treinamento ou enviar comandos relacionados à avaliação e validação do modelo.
+
+Caso o cliente não consiga estabelecer uma conexão com o servidor, uma mensagem de erro será exibida indicando que a conexão falhou.
+
+Em resumo, esse código implementa um cliente que participa do treinamento federado, interagindo com um servidor central. Ele carrega os dados de treinamento específicos do cliente, estabelece a comunicação com o servidor e aguarda por comandos para realizar tarefas relacionadas ao treinamento e validação do modelo de aprendizado.
 
 ---
 ## **Resultados**
