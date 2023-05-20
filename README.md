@@ -36,7 +36,7 @@ $ python3 client.py 1
 ---
 ## **Link para o vídeo no Youtube**
 
-> https://drive.google.com/file/d/1FsVUoKMTNmcZCnra4a8NeBoQpfEOSrgd/view
+> https://youtu.be/8Gfp4N2vZuM
 
 ---
 ## **Implementação**
@@ -79,25 +79,33 @@ Se a acurácia global média atingir ou ultrapassar a meta de acurácia especifi
 
 O cliente inicia obtendo os dados de treinamento específicos para um determinado ID de cliente (cid). Esses dados são os que foram pré-estabelecidos pelo script *getSplitData.py* e representam um subconjunto dos dados de treinamento disponíveis.
 
-Após carregar os dados de treinamento, o cliente chama a função runClient, que tem a responsabilidade de estabelecer uma conexão gRPC com o servidor, criar uma porta para o cliente e enviar uma solicitação de registro para o servidor. O registro é necessário para que o servidor saiba que o cliente está disponível para participar do treinamento federado. Se o registro for bem-sucedido, o cliente entra em um estado de espera por comandos do servidor, utilizando o método __waitingForServer para receber, processar esses comandos e executar as funções necessárias conforme solicitado pelo servidor. Por exemplo, o servidor pode enviar comandos para atualizar os pesos do modelo do cliente, solicitar que o cliente execute uma etapa de treinamento ou enviar comandos relacionados à avaliação e validação do modelo.
+Após carregar os dados de treinamento, o cliente chama a função runClient, que tem a responsabilidade de estabelecer uma conexão gRPC com o servidor, criar uma porta para o cliente e enviar uma solicitação de registro para o servidor. O registro é necessário para que o servidor saiba que o cliente está disponível para participar do treinamento federado. Se o registro for bem-sucedido, o cliente entra em um estado de espera por comandos do servidor por meio do método **__waitingForServer**. 
+
+Dessa forma, o cliente poderá receber uma solicitação do servidor para a execução das seguintes funções: 
+
+- **sendRound**: Exibe o round atual que foi enviado pelo servidor. 
+- **startLearning**: Inicia uma rodada de treinamento e retorna os pesos locais do modelo contruido para o servidor.
+- **getSampleSize**: Envia o tamanho da base de treino utilizada no treinamento.
+- **modelValidation**: Atualiza os pesos do modelo local com os pesos globais e realiza uma validação, retornando ao servidor a acurácia obtida.
+- **killClient**: Fecha o canal de conecção entre cliente-servidor, sinalizando assim que o teste foi finalizado.
 
 Caso o cliente não consiga estabelecer uma conexão com o servidor, uma mensagem de erro será exibida indicando que a conexão falhou.
 
-Em resumo, esse código implementa um cliente que participa do treinamento federado, interagindo com um servidor central. Ele carrega os dados de treinamento específicos do cliente, estabelece a comunicação com o servidor e aguarda por comandos para realizar tarefas relacionadas ao treinamento e validação do modelo de aprendizado.
+Em resumo, esse código implementa um cliente que participa do treinamento federado, interagindo com um servidor central. Ele carrega os dados de treinamento específicos do cliente, estabelece a comunicação com o servidor e aguarda por comandos para realizar tarefas relacionadas ao treinamento, atualização e validação do modelo de aprendizado.
 
 ---
 ## **Resultados**
 
-Para coletar uma série de resultados, a aplicação foi testada de duas formas, utilizando **3** clientes e treinando **1** cliente por round e utilizando **3** clientes e treinando **3** clientes por round. Vale destacar que também utilizamos a abordagem centralizada devenvolvida no *Laboratório_2* com fins de comparações entre as abordagens *Federada* e *Centralizada*.
+Para coletar uma série de resultados, a aplicação foi testada de duas formas, utilizando **3** clientes e treinando **1** cliente por round e utilizando **3** clientes e treinando **3** clientes por round. Vale destacar que também utilizamos a abordagem centralizada devenvolvida no *Laboratório_2* com fins de comparações entre os modelos *Federado* e *Centralizado*.
 
 > ![Imagem 1](results/plot_full.png)
 
-Analisando o gráfico, é possível perceber que as duas abordagens federadas tem resultados similares, apenas uma pequena superioridade na estabilidade para o caso de 3 clientes por round.
+Analisando o gráfico, é possível perceber que as duas abordagens federadas tem resultados similares, apenas uma pequena superioridade na estabilidade para o caso de 3 clientes por round. Vale destacar que, tal como estudado no *Laboratório_2*, o método de aprendizado centralizado possui um desempenho melhor em comparação ao distribuido.
 
-Tal resultado não condiz com o esperado quando imaginamos uma aplicação real, uma vez que o ideal seria o teste com um cliente por round performar de forma inferior, porém podemos explicar esse fenômeno da seguinte forma: como a base de dados foi dividida de forma homogênea para os clientes, onde cada um recebeu uma fração distintas de todos os *labels*, ocorreu que não houve uma disparidade significativa entre os *datasets* de cada indivíduo, dessa forma um modelo global que foi construído a partir dos pesos de um único cliente específico irá performar relativamente bem sob os dados de outros clientes, por conta da falta de particularidades.
+Quando analisamos os resultados similares dos modelos federados, concluimos que tal fenômeno não condiz com o esperado quando pensamos em uma aplicação real, visto que o teste com um cliente por *round* deveria performar de forma inferior, porém podemos explicar esse acontecimento. Como a base de dados foi dividida de forma homogênea para os clientes, onde cada um recebeu uma fração distintas de todos os *labels*, ocorreu que não houve uma disparidade significativa entre os *datasets* de cada indivíduo, dessa forma um modelo global que foi construído a partir dos pesos de um único cliente específico irá performar relativamente bem sob os dados de outros clientes por conta da falta de particularidades de cada indivíduo.
 
 ## **Conclusão**
 
-A partir dos testes realizados, concluímos que os resultados encontrados condizem com o que se esperava a partir do escopo do trabalho. Foi possível realizar os objetivos de implementar o aprendizado federado, construindo um modelo global que funciona pra todos os clientes, além da utilização da troca de mensagens entre os componentes a partir do gRPC.
+A partir dos testes realizados, concluímos que os resultados encontrados condizem com o que se esperava a partir do escopo do trabalho. Foi possível realizar os objetivos de implementar o aprendizado federado, construindo um modelo global que converge pra todos os clientes, além da utilização da troca de mensagens entre os componentes a partir do gRPC.
 
-Por fim, podemos destacar que, para um possível aprimoramento deste trabalho em estudos futuros, algo interessante a se fazer é a implementação de particularidades nos dados de cada cliente, dessa forma alcansaríamos uma aplicação mais real, na qual há uma divisão mais heterogenia do dataset.
+Por fim, podemos destacar que, para um possível aprimoramento deste trabalho em estudos futuros, algo interessante a se fazer é a implementação de particularidades nos dados de cada cliente, dessa forma alcansaríamos uma aplicação mais real, na qual há uma divisão mais heterogênia do dataset.
