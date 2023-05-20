@@ -24,7 +24,7 @@ $ python3 client.py 1
 ```
 
 ---
-## **Link para o vídeo no Drive**
+## **Link para o vídeo no Youtube**
 
 > https://drive.google.com/file/d/1FsVUoKMTNmcZCnra4a8NeBoQpfEOSrgd/view
 
@@ -39,15 +39,6 @@ Explicar como funciona o server e o client, explicar funções principais do .pr
  - Treinamento federado
  - Agregação de pesos
  - Validação do modelo global
- - Validação do modelo global
-
-**Biblitecas utilizadas**:
- - grpc
- - threading
- - concurrent.futures
- - queue
- - time
- - sys
 
 **Funcionamento**:
 
@@ -72,9 +63,21 @@ Se a precisão global média atingir ou ultrapassar a meta de precisão especifi
  - Validação do modelo
  - Encerramento do cliente
 
-**Biblitecas utilizadas**:
-
 **Funcionamento**:
+
+O cliente
 
 ---
 ## **Resultados**
+
+Para analisar os resultados, a aplicação foi testada de três formas: Centralizado, Federado utilizando 3 clientes e 1 cliente por round, e Federado utilizando 3 clientes e 3 clientes por round. 
+
+![Imagem 1](results/plot_full.png)
+
+Analisando o gráfico, é possível perceber que as duas abordagens federadas tem resultados similares, com uma pequena estabilidade superior no caso de 3 clientes por round.
+
+Tal resultado não condiz com o esperado em uma aplicação real, uma vez que o ideal seria o teste com um cliente por round performar de forma inferior, porém podemos explicar esse fenômeno da seguinte forma: como a base de dados foi dividida de forma homogênea para os clientes, isso implica que não há uma disparidade significativa entre os datasets de cada cliente, dessa forma um modelo global que foi construído a partir dos pesos de um cliente específico, irá performar relativamente bem em outros clientes, visto que os dados não possuem fortes particularidades.
+
+## **Conclusão**
+
+A partir dos testes realizados, concluímos que os resultados encontrados condizem com o que se esperava a partir do escopo do trabalho. Foi possível realizar os objetivos de implementar o aprendizado federado, construindo um modelo global que funciona pra todos os clientes, além da utilização da troca de mensagens entre os componentes a partir do gRPC.
